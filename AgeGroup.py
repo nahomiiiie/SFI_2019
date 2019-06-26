@@ -7,9 +7,10 @@ import matplotlib.pyplot as plt
 
 from random import sample
 from mesa import Agent, Model
-from mesa.time import RandomActivation
+from mesa.time import SimultaneousActivation
 from mesa.datacollection import DataCollector
 from mesa.space import NetworkGrid
+from make_graph import portray
 
 
 class Thought(Enum):
@@ -21,12 +22,12 @@ class Thought(Enum):
 
 def number_thought(model, thought):
     # creates variable and hold value for number of people with belief
-    thought_total = 0
-    for x in model.grid.get_all_cell_contents():
-        if x.belief is thought:
-            thought_total += 1
-    return thought_total
-    # return sum([1 for a in model.grid.get_all_cell_contents() if a.belief is thought])
+    #thought_total = 0
+    # for x in model.grid.get_all_cell_contents():
+    #    if x.belief is thought:
+     #       thought_total += 1
+    # return thought_total
+    return sum([1 for a in model.population if model.population[a].belief is thought])
 
 
 def percent_pro(model):
@@ -44,74 +45,92 @@ def percent_neutral(model):
 class IdeaSpread(Model):
     # creates a set number of agents and has them share beliefs
     # TODO: find out how to create each age group w/ diff params w/o sep models
-    def __init__(self, num_nodes=50, avg_node_degree=11, initial_anti=9):
+    def __init__(self, num_nodes=50, avg_node_degree=11, initial_anti=.18, age=18):
         self.num_nodes = num_nodes
-        prob = avg_node_degree / self.num_nodes
+        prob = float(avg_node_degree) / float(self.num_nodes)
         # creates number of nodes and number of connections between each
-        self.Vis = nx.erdos_renyi_graph(n=self.num_nodes, p=prob)
-        self.color_map = []
+        self.color_map = ['gray'] * self.num_nodes
         # mesa addition, creates knowledge of neighbors
-        self.grid = NetworkGrid(self.Vis)
-        self.schedule = RandomActivation(self)
+        self.schedule = SimultaneousActivation(self)
         self.initial_anti = initial_anti
-        self.datacollector = DataCollector({"Anti Vaxxers": percent_anti,
-                                            "Pro Vaxxine": percent_pro})
+        # def setup_agents(self, age, num_nodes):
         # creates agents
+        self.Vis = nx.erdos_renyi_graph(n=self.num_nodes, p=prob)
+        self.grid = NetworkGrid(self.Vis)
+        self.population = {}
+
         for i, node in enumerate(self.Vis.nodes()):
             a = Individual(i, self, Thought.NEUTRAL)
             self.schedule.add(a)
             self.grid.place_agent(a, node)
-            self.color_map.append('green')
-
+            self.population[a.unique_id] = a
             # randomly assigns nodes to be anti within group
-            # TODO:figure out random function w nodes
-        anti_nodes = random.sample(self.Vis.nodes(), self.initial_anti)
-        for a in self.grid.get_cell_list_contents(anti_nodes):
-            a.belief = Thought.ANTI
+            if random.random() <= self.initial_anti:
+                a.belief = Thought.ANTI
+                self.color_map[a.unique_id] = ('red')
+            else:
+                self.color_map[a.unique_id] = 'green'
+
         # set up number that is anti
         # TODO: figure out how to change color of anti po
 
+        self.datacollector = DataCollector({"Anti Vaxxers": percent_anti,
+                                            "Pro Vaxxine": percent_pro})
         self.running = True
         self.datacollector.collect(self)
 
     def step(self):
-        self.schedule.step()
+        self.schedule.step(self.population)
         self.datacollector.collect(self)
+# TODO: when run, do not set up new networks
 
     def run(self, n):
         for i in range(n):
             print(percent_anti(self))
-            self.visual(self.Vis)
+            portray(self, self.Vis)
             self.step()
-
-    def visual(self, G):
-        nx.draw(G, node_color=self.color_map, with_labels=True)
-        plt.show()
+            for a in self.population:
+                if self.population[a].belief == Thought.ANTI:
+                    self.color_map[a] = ('red')
+                else:
+                    self.color_map[a] = 'green'
 
 
 class Individual(Agent):
     def __init__(self, unique_id, model, belief, age=18):
         Agent.__init__(self, unique_id, model)
+        self.unique_id = unique_id
         self.belief = belief
         self.age = age
         self.pro_friend = 0
         self.anti_friend = 0
     # gives instructions for communicating w neighbors
 
-    def spread_beliefs(self):
+    def spread_beliefs(self, population):
         neighbors = [agent for agent in self.model.grid.get_neighbors(
             self.pos, include_center=False)]
         for y in neighbors:
-            if y.belief == Thought.ANTI:
+            if population[y].belief == Thought.ANTI:
                 self.anti_friend += 1
-            if y.belief == Thought.PRO:
+            if population[y].belief == Thought.PRO:
                 self.pro_friend += 1
+
+        # changing
+        # TODO: incorporate the neutral mindest in determining
         if self.anti_friend > self.pro_friend:
             self.belief = Thought.ANTI
-        elif self.pro_friend > self.anti_friend:
-            self.belief = Thought.PRO
+        # elif self.pro_friend > self.anti_friend:
+        #    self.belief = Thought.PRO
+
         else:
             self.belief = Thought.NEUTRAL
 
-    def step(self):
-        self.spread_beliefs()
+    def step(self, population):
+        self.spread_beliefs(population)
+        # self.advance()
+
+    def advance(self):
+        return
+
+
+# save location as dict pos = {},networkx for edges8

@@ -13,11 +13,10 @@ from mesa.datacollection import DataCollector
 from mesa.space import NetworkGrid
 """
 from AgeGroup import IdeaSpread
-#from visual import see_network
+#from make_graph import see_network
 # TODO: fix visualization code, figure out how it works in mesa
 #from visual import network_portrayal
 
 
-main = IdeaSpread()
+main = IdeaSpread(60, 11, .18, 18)
 main.run(2)
-# see_network(G)
