@@ -21,12 +21,8 @@ class Thought(Enum):
 
 
 def number_thought(model, thought):
-    # creates variable and hold value for number of people with belief
-    #thought_total = 0
-    # for x in model.grid.get_all_cell_contents():
-    #    if x.belief is thought:
-     #       thought_total += 1
-    # return thought_total
+    # return float(sum([1 for a in model.population if model.population[a].belief is thought]))/float(len(model.population))
+    # ABOVE: the percentage BELOW: the sumb
     return sum([1 for a in model.population if model.population[a].belief is thought])
 
 
@@ -44,8 +40,7 @@ def percent_neutral(model):
 
 class IdeaSpread(Model):
     # creates a set number of agents and has them share beliefs
-    # TODO: find out how to create each age group w/ diff params w/o sep models
-    def __init__(self, num_nodes=50, avg_node_degree=11, initial_anti=.18, age=18):
+    def __init__(self, num_nodes=50, avg_node_degree=11, initial_anti=.18, initial_pro=.71, age=18):
         self.num_nodes = num_nodes
         prob = float(avg_node_degree) / float(self.num_nodes)
         # creates number of nodes and number of connections between each
@@ -53,9 +48,11 @@ class IdeaSpread(Model):
         # mesa addition, creates knowledge of neighbors
         self.schedule = SimultaneousActivation(self)
         self.initial_anti = initial_anti
+        self.initial_pro = initial_pro
         # def setup_agents(self, age, num_nodes):
         # creates agents
         self.Vis = nx.erdos_renyi_graph(n=self.num_nodes, p=prob)
+        self.ages = {}
         self.grid = NetworkGrid(self.Vis)
         self.population = {}
 
@@ -64,16 +61,19 @@ class IdeaSpread(Model):
             self.schedule.add(a)
             self.grid.place_agent(a, node)
             self.population[a.unique_id] = a
-            # randomly assigns nodes to be anti within group
+            # randomly assigns nodes to be +/-/0 within group
             if random.random() <= self.initial_anti:
                 a.belief = Thought.ANTI
                 self.color_map[a.unique_id] = ('red')
-            else:
+            elif random.random() <= self.initial_pro:
                 self.color_map[a.unique_id] = 'green'
+            else:
+                self.color_map[a.unique_id] = 'gray'
 
-        # set up number that is anti
-        # TODO: figure out how to change color of anti po
+        for l in self.population:
+            self.ages[l] = self.population[l].age
 
+# TODO: figure otu impletmeentation of datacollector
         self.datacollector = DataCollector({"Anti Vaxxers": percent_anti,
                                             "Pro Vaxxine": percent_pro})
         self.running = True
@@ -89,11 +89,14 @@ class IdeaSpread(Model):
             print(percent_anti(self))
             portray(self, self.Vis)
             self.step()
+            # reassigns color of people based on belief
             for a in self.population:
                 if self.population[a].belief == Thought.ANTI:
                     self.color_map[a] = ('red')
-                else:
+                elif self.population[a].belief == Thought.PRO:
                     self.color_map[a] = 'green'
+                else:
+                    self.color_map[a] = 'gray'
 
 
 class Individual(Agent):
@@ -104,6 +107,7 @@ class Individual(Agent):
         self.age = age
         self.pro_friend = 0
         self.anti_friend = 0
+        self.none = 0
     # gives instructions for communicating w neighbors
 
     def spread_beliefs(self, population):
@@ -114,16 +118,18 @@ class Individual(Agent):
                 self.anti_friend += 1
             if population[y].belief == Thought.PRO:
                 self.pro_friend += 1
+            if population[y].belief == Thought.NEUTRAL:
+                self.none += 1
 
-        # changing
-        # TODO: incorporate the neutral mindest in determining
-        if self.anti_friend > self.pro_friend:
+        if self.anti_friend > self.pro_friend and self.anti_friend > self.none:
             self.belief = Thought.ANTI
-        # elif self.pro_friend > self.anti_friend:
-        #    self.belief = Thought.PRO
-
+        elif self.pro_friend > self.anti_friend and self.pro_friend > self.none:
+            self.belief = Thought.PRO
+        elif self.none > self.anti_friend and self.none > self.pro_friend:
+            self.belief = Thought.NEUTRAL
         else:
             self.belief = Thought.NEUTRAL
+        # try and do communtiy based belief change to see if spreads better
 
     def step(self, population):
         self.spread_beliefs(population)
@@ -131,6 +137,3 @@ class Individual(Agent):
 
     def advance(self):
         return
-
-
-# save location as dict pos = {},networkx for edges8
