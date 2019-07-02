@@ -14,6 +14,6 @@ from mesa.space import NetworkGrid
 """
 from AgeGroup import IdeaSpread
 
-main = IdeaSpread(100, 11, .18, .71, 18, 22)
+main = IdeaSpread(100, .18, .71, 18, 22)
 
 main.run(2)
