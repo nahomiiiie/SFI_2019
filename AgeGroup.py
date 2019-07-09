@@ -20,6 +20,7 @@ groupsize = 13.9
 
 talk = [11.1, 1.6, .8, .6, 2.6, 4.3, 1.7,
         1.1, .9, 2.0, 3.4, 1.8, .5, 1.0, 1.7, 2.7]
+total_stats = []
 
 
 class Thought(Enum):
@@ -30,7 +31,7 @@ class Thought(Enum):
 
 
 def number_thought(model, thought):
-    return float(sum([1 for a in model.population if model.population[a].belief is thought]))/float(len(model.population))
+    return float(sum([1 for a in model.population if model.population[a].belief is thought]))/float(len(model.population)) * 100
     # ABOVE: the percentage BELOW: the sumb
     # return sum([1 for a in model.population if model.population[a].belief is thought])
 
@@ -65,6 +66,8 @@ class IdeaSpread(Model):
 
         # def setup_agents(self, age, num_nodes):
         # creates agents
+        # ORIGINAL CODE W RANDOM SETUP IN GIT.
+# CURRENT: single group with entirely anti belief
         for i, node in enumerate(self.Vis.nodes()):
             a = Individual(i, self, Thought.NEUTRAL, first_age +
                            i*(last_age - first_age)/num_nodes)
@@ -72,7 +75,7 @@ class IdeaSpread(Model):
             self.grid.place_agent(a, node)
             self.population[a.unique_id] = a
             # randomly assigns nodes to be +/-/0 within group
-            if random.random() <= self.initial_anti:
+            if a.age <= first_age:
                 a.belief = Thought.ANTI
                 self.color_map[a.unique_id] = ('red')
             elif random.random() <= self.initial_pro:
@@ -137,8 +140,10 @@ class IdeaSpread(Model):
         self.datacollector.collect(self)
 
     def run(self, n):
-        for i in range(n):
+        i = 1
+        while i <= n:
             print(percent_anti(self))
+            total_stats.append(percent_anti(self))
             portray(self, self.Vis)
             self.step()
             # reassigns color of people based on belief
@@ -149,6 +154,7 @@ class IdeaSpread(Model):
                     self.color_map[a] = 'green'
                 else:
                     self.color_map[a] = 'gray'
+            i += 1
 
 
 class Individual(Agent):
