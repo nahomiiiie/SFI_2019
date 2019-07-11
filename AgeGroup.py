@@ -13,10 +13,7 @@ from mesa.space import NetworkGrid
 from make_graph import portray
 
 probabilities = {}
-groupsize = 21.8
-groupsize = 15.0
-groupsize = 14.3
-groupsize = 13.9
+groupsize = [21.8, 15.0, 14.3, 13.9]
 
 talk = [11.1, 1.6, .8, .6, 2.6, 4.3, 1.7,
         1.1, .9, 2.0, 3.4, 1.8, .5, 1.0, 1.7, 2.7]
@@ -62,7 +59,7 @@ class IdeaSpread(Model):
         self.ages = {}
         self.grid = NetworkGrid(self.Vis)
         self.population = {}
-        groupsize = self.num_nodes/(last_age-first_age)
+        # groupsize = self.num_nodes/(last_age-first_age)
 
         # def setup_agents(self, age, num_nodes):
         # creates agents
@@ -74,8 +71,8 @@ class IdeaSpread(Model):
             self.schedule.add(a)
             self.grid.place_agent(a, node)
             self.population[a.unique_id] = a
-            # randomly assigns nodes to be +/-/0 within group
-            if a.age <= first_age:
+            # assigns nodes aged 17-19 to be anti
+            if a.age <= 29 and a.age >= 26:
                 a.belief = Thought.ANTI
                 self.color_map[a.unique_id] = ('red')
             elif random.random() <= self.initial_pro:
@@ -92,42 +89,41 @@ class IdeaSpread(Model):
         for id1 in self.population:
             for id2 in self.population:
                 if self.population[id1].prob_ref == 0 and id1 < id2:
-                    if self.population[id2].prob_ref == 0 and random.random() < (talk[0]/groupsize):
+                    if self.population[id2].prob_ref == 0 and random.random() < (talk[0]/groupsize[0]):
                         self.Vis.add_edge(id1, id2)
-                    if self.population[id2].prob_ref == 1 and random.random() < (talk[1]/groupsize):
+                    if self.population[id2].prob_ref == 1 and random.random() < (talk[1]/groupsize[0]):
                         self.Vis.add_edge(id1, id2)
-                    if self.population[id2].prob_ref == 2 and random.random() < (talk[2]/groupsize):
+                    if self.population[id2].prob_ref == 2 and random.random() < (talk[2]/groupsize[0]):
                         self.Vis.add_edge(id1, id2)
-                    if self.population[id2].prob_ref == 3 and random.random() < (talk[3]/groupsize):
+                    if self.population[id2].prob_ref == 3 and random.random() < (talk[3]/groupsize[0]):
                         self.Vis.add_edge(id1, id2)
                 if self.population[id1].prob_ref == 1 and id1 < id2:
-                    if self.population[id2].prob_ref == 0 and random.random() < (talk[4]/groupsize):
+                    if self.population[id2].prob_ref == 0 and random.random() < (talk[4]/groupsize[1]):
                         self.Vis.add_edge(id1, id2)
-                    if self.population[id2].prob_ref == 1 and random.random() < (talk[5]/groupsize):
+                    if self.population[id2].prob_ref == 1 and random.random() < (talk[5]/groupsize[1]):
                         self.Vis.add_edge(id1, id2)
-                    if self.population[id2].prob_ref == 2 and random.random() < (talk[6]/groupsize):
+                    if self.population[id2].prob_ref == 2 and random.random() < (talk[6]/groupsize[1]):
                         self.Vis.add_edge(id1, id2)
-                    if self.population[id2].prob_ref == 3 and random.random() < (talk[7]/groupsize):
+                    if self.population[id2].prob_ref == 3 and random.random() < (talk[7]/groupsize[1]):
                         self.Vis.add_edge(id1, id2)
                 if self.population[id1].prob_ref == 2 and id1 < id2:
-                    if self.population[id2].prob_ref == 0 and random.random() < (talk[8]/groupsize):
+                    if self.population[id2].prob_ref == 0 and random.random() < (talk[8]/groupsize[2]):
                         self.Vis.add_edge(id1, id2)
-                    if self.population[id2].prob_ref == 1 and random.random() < (talk[9]/groupsize):
+                    if self.population[id2].prob_ref == 1 and random.random() < (talk[9]/groupsize[2]):
                         self.Vis.add_edge(id1, id2)
-                    if self.population[id2].prob_ref == 2 and random.random() < (talk[10]/groupsize):
+                    if self.population[id2].prob_ref == 2 and random.random() < (talk[10]/groupsize[2]):
                         self.Vis.add_edge(id1, id2)
-                    if self.population[id2].prob_ref == 3 and random.random() < (talk[11]/groupsize):
+                    if self.population[id2].prob_ref == 3 and random.random() < (talk[11]/groupsize[2]):
                         self.Vis.add_edge(id1, id2)
                 if self.population[id1].prob_ref == 3 and id1 < id2:
-                    if self.population[id2].prob_ref == 0 and random.random() < (talk[12]/groupsize):
+                    if self.population[id2].prob_ref == 0 and random.random() < (talk[12]/groupsize[3]):
                         self.Vis.add_edge(id1, id2)
-                    if self.population[id2].prob_ref == 1 and random.random() < (talk[13]/groupsize):
+                    if self.population[id2].prob_ref == 1 and random.random() < (talk[13]/groupsize[3]):
                         self.Vis.add_edge(id1, id2)
-                    if self.population[id2].prob_ref == 2 and random.random() < (talk[14]/groupsize):
+                    if self.population[id2].prob_ref == 2 and random.random() < (talk[14]/groupsize[3]):
                         self.Vis.add_edge(id1, id2)
-                    if self.population[id2].prob_ref == 3 and random.random() < (talk[15]/groupsize):
+                    if self.population[id2].prob_ref == 3 and random.random() < (talk[15]/groupsize[3]):
                         self.Vis.add_edge(id1, id2)
-
 
 # TODO: figure out implementation of datacollector
         self.datacollector = DataCollector({"Anti Vaxxers": percent_anti,
@@ -144,7 +140,7 @@ class IdeaSpread(Model):
         while i <= n:
             print(percent_anti(self))
             total_stats.append(percent_anti(self))
-            portray(self, self.Vis)
+            # portray(self, self.Vis)
             self.step()
             # reassigns color of people based on belief
             for a in self.population:
@@ -198,8 +194,7 @@ class Individual(Agent):
             self.belief = Thought.NEUTRAL
         else:
             self.belief = self.belief
-        # print(self.none, self.pro_friend,
-            self.anti_friend, self.belief, self.age
+        # print(self.none, self.pro_friend,self.anti_friend, self.belief, self.age)
         # try and do communtiy based belief change to see if spreads better
 
     def step(self, population, graph):
